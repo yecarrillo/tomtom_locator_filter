@@ -2,14 +2,14 @@
 QGIS TomTom Locator Filter Plugin
 ====================================
 
-This is a so called QgsLocator filter for the TomTom API geocoder service,
+This is a so called QgsLocator filter for the TomTom API search service,
 implemented as a QGIS plugin.
 
 Read about writing one here:
 
 http://www.qgis.nl/2018/05/16/english-coding-a-qgslocator-plugin/
 
-This Locator Filter searches for names in the TomTom API geocoder service:
+This Locator Filter searches for names in the TomTom API search service:
 
 see https://developer.tomtom.com/search-api/search-api-documentation-geocoding/geocode
 
