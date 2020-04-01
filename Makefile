@@ -1,12 +1,12 @@
 #/***************************************************************************
-# Nominatim Locator Plugin
+# TomTom Locator Plugin
 #
 # This plugins can be used to connect the QgsLocator search bar to Geocoder services
 #							 -------------------
-#		begin				: 2018-03-21
+#		begin				: 2020-02-15
 #		git sha				: $Format:%H$
-#		copyright			: (C) 2018 by Zuidt
-#		email				: richard@zuidt.nl
+#		copyright			: (C) 2020 by yecarrillo
+#		email				: yecarrillo@gmail.com
 # ***************************************************************************/
 #
 #/***************************************************************************
@@ -19,13 +19,13 @@
 # ***************************************************************************/
 
 
-PLUGINNAME = nominatim_locator_filter
+PLUGINNAME = tomtom_locator_filter
 
 VERSION=$(shell cat metadata.txt | grep version= | sed -e 's,version=,,')
 
 PY_FILES = \
 	__init__.py \
-	nominatimfilter.py networkaccessmanager.py
+	tomtomfilter.py networkaccessmanager.py
 
 EXTRAS = metadata.txt
 

@@ -1,39 +1,47 @@
+# This file contains metadata for your plugin.
+
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=Nominatim Locator Filter
-description=This is a plugin which adds a Nominatim Locator Filter (Geocoder) to QGIS
-about=Nominatim is a free Geocoder service provided by the OpenStreetMap project.
-    A Locator Filter implements the fetching of data from internal or external sources.
-
-    Because it is *NOT* allowed to use the Nominatim service as a 'search as you type' service,
-    the locator will not fire a request unless you end your string with a space or enter.
-
-    Read more: <a href="http://www.qgis.nl/2018/05/16/english-coding-a-qgslocator-plugin/?lang=en">http://www.qgis.nl/2018/05/16/english-coding-a-qgslocator-plugin</a>
-
-version=0.2.3
+name=TomTom Locator Filter
 qgisMinimumVersion=3.0
-author=Richard Duivenvoorde, Zuidt
-email=richard@zuidt.nl
+description=This is a plugin which adds a TomTom Locator Filter (Geocoder) to QGIS
+version=0.1
+author=Eduin Carrillo
+email=yecarrillo@gmail.com
+
+about=A Locator Filter implements the fetching of data from internal or external sources. The locator will not fire a request unless you end your string with a space or enter. Read more: <a href="https://developer.tomtom.com/search-api">https://developer.tomtom.com/search-api</a>
+
+tracker=http://bugshttps://github.com/yecarrillo/tomtom_locator_filter/issues
+repository=https://github.com/yecarrillo/tomtom_locator_filter
+# End of mandatory metadata
+
+# Recommended items:
+
+hasProcessingProvider=no
+# Uncomment the following line and add your changelog:
+# changelog=
 
 # Tags are comma separated with spaces allowed
-tags=geocoder, locator, filter, osm, nominatim
+tags=python
 
-tracker=https://github.com/rduivenvoorde/nominatim_locator_filter/issues
-homepage=https://github.com/rduivenvoorde/nominatim_locator_filter
-repository=https://github.com/rduivenvoorde/nominatim_locator_filter
-
-changelog=
-    0.2.3       remove debug msg which throws error (issue#1, thanks Harrissou)
-                zoom to boundingbox returned by Nominatim (issue#2, thanks dbobak)
-    0.2.2       fix homepage url, messagelog title, remove experimental flag
-    0.2.1       fix repo url, fix name in metadata.txt
-    0.2.0       initial public release
-
-category=Filter
-
+homepage=https://github.com/yecarrillo/tomtom_locator_filter
+category=Plugins
+icon=icons/icon.svg
 # experimental flag
 experimental=False
 
-# change icon
-icon=icons/icon.svg
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+
+# Since QGIS 3.8, a comma separated list of plugins to be installed
+# (or upgraded) can be specified.
+# Check the documentation for more information.
+# plugin_dependencies=
+
+Category of the plugin: Raster, Vector, Database or Web
+# category=
+
+# If the plugin can run on QGIS Server.
+server=False
+

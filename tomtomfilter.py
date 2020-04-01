@@ -10,13 +10,13 @@ from qgis.PyQt.QtCore import pyqtSignal
 import json
 
 
-class NominatimFilterPlugin:
+class TomTomFilterPlugin:
 
     def __init__(self, iface):
 
         self.iface = iface
 
-        self.filter = NominatimLocatorFilter(self.iface)
+        self.filter = TomTomLocatorFilter(self.iface)
 
         # THIS is not working?? As in show_problem never called
         self.filter.resultProblem.connect(self.show_problem)
@@ -24,7 +24,7 @@ class NominatimFilterPlugin:
 
     def show_problem(self, err):
         self.filter.info("showing problem???")  # never come here?
-        self.iface.messageBar().pushWarning("NominatimLocatorFilter Error", '{}'.format(err))
+        self.iface.messageBar().pushWarning("TomTomLocatorFilter Error", '{}'.format(err))
 
     def initGui(self):
         pass
@@ -36,11 +36,10 @@ class NominatimFilterPlugin:
 
 # SEE: https://github.com/qgis/QGIS/blob/master/src/core/locator/qgslocatorfilter.h
 #      for all attributes/members/functions to be implemented
-class NominatimLocatorFilter(QgsLocatorFilter):
+class TomTomLocatorFilter(QgsLocatorFilter):
 
-    USER_AGENT = b'Mozilla/5.0 QGIS NominatimLocatorFilter'
 
-    SEARCH_URL = 'http://nominatim.openstreetmap.org/search?format=json&q='
+    SEARCH_URL = 'https://api.tomtom.com/search/2/search/'
     # test url to be able to force errors
     #SEARCH_URL = 'http://duif.net/cgi-bin/qlocatorcheck.cgi?q='
 
@@ -64,43 +63,58 @@ class NominatimLocatorFilter(QgsLocatorFilter):
         return self.__class__.__name__
 
     def clone(self):
-        return NominatimLocatorFilter(self.iface)
+        return TomTomLocatorFilter(self.iface)
 
     def displayName(self):
-        return 'Nominatim Geocoder (end with space to search)'
+        return 'TomTom Geocoder (end with space to search)'
 
     def prefix(self):
-        return 'osm'
+        return 'tomtom'
 
     def fetchResults(self, search, context, feedback):
 
         if len(search) < 2:
             return
 
-        # see https://operations.osmfoundation.org/policies/nominatim/
-        # "Auto-complete search This is not yet supported by Nominatim and you must not implement such a service on the client side using the API."
-        # so end with a space to trigger a search:
+        # End with a space to trigger a search:
         if search[-1] != ' ':
             return
 
         url = '{}{}'.format(self.SEARCH_URL, search)
+        url = url + '.json?'
+        url = url + '&key='
+        url = url + '&idxSet=POI,Geo,Addr,PAD,Str,Xstr'
         self.info('Search url {}'.format(url))
         nam = NetworkAccessManager()
         try:
-            # see https://operations.osmfoundation.org/policies/nominatim/
-            # "Provide a valid HTTP Referer or User-Agent identifying the application (QGIS geocoder)"
-            headers = {b'User-Agent': self.USER_AGENT}
             # use BLOCKING request, as fetchResults already has it's own thread!
-            (response, content) = nam.request(url, headers=headers, blocking=True)
+            (response, content) = nam.request(url, blocking=True)
             #self.info(response)
             #self.info(response.status_code)
             if response.status_code == 200:  # other codes are handled by NetworkAccessManager
                 content_string = content.decode('utf-8')
                 locations = json.loads(content_string)
-                for loc in locations:
+                for loc in locations['results']:
                     result = QgsLocatorResult()
                     result.filter = self
-                    result.displayString = '{} ({})'.format(loc['display_name'], loc['type'])
+                    if loc['type'] == 'Geography':
+                        loc_type = loc['entityType']
+                    else:
+                        loc_type = loc['type']
+
+                    if loc['type'] == 'Geography':
+                        loc_display = loc['address']['freeformAddress'] + ', ' + loc['address']['country']
+                    elif loc['type'] == 'Street' or loc['type'] == 'Cross Street':
+                        loc_display = loc['address']['streetName'] + ', ' + loc['address']['municipality'] + ', ' + loc['address']['country']
+                    elif loc['type'] == 'POI':
+                        if loc['poi'].get('brands'):
+                            loc_display = loc['poi']['brands'][0]['name'] + ' ' + loc['poi']['name'] + ' - ' + loc['address']['municipality'] + ', ' + loc['address']['country']
+                        else:
+                            loc_display = loc['poi']['name'] + ' - ' + loc['address']['municipality'] + ', ' + loc['address']['country']
+                    else:
+                        loc_display = loc['address']['freeformAddress'] + ', ' + loc['address']['country']
+
+                    result.displayString = '{} ({})'.format(loc_display, loc_type)
                     # use the json full item as userData, so all info is in it:
                     result.userData = loc
                     self.resultFetched.emit(result)
@@ -110,7 +124,7 @@ class NominatimLocatorFilter(QgsLocatorFilter):
             # only this one seems to work
             self.info(err)
             # THIS: results in a floating window with a warning in it, wrong thread/parent?
-            #self.iface.messageBar().pushWarning("NominatimLocatorFilter Error", '{}'.format(err))
+            #self.iface.messageBar().pushWarning("TomTomLocatorFilter Error", '{}'.format(err))
             # THIS: emitting the signal here does not work either?
             self.resultProblem.emit('{}'.format(err))
 
@@ -118,18 +132,23 @@ class NominatimLocatorFilter(QgsLocatorFilter):
     def triggerResult(self, result):
         self.info("UserClick: {}".format(result.displayString))
         doc = result.userData
-        extent = doc['boundingbox']
+        if doc['type'] == 'Street' or doc['type'] == 'POI' or doc['type'] == 'Cross Street' or doc['type'] == 'Point Address' \
+                or doc['type'] == 'Address Range':
+            extent = doc['viewport']
+        else:
+            extent = doc['boundingBox']
+
         # "boundingbox": ["52.641015", "52.641115", "5.6737302", "5.6738302"]
-        rect = QgsRectangle(float(extent[2]), float(extent[0]), float(extent[3]), float(extent[1]))
+        rect = QgsRectangle(float(extent['topLeftPoint']['lon']), float(extent['btmRightPoint']['lat']), float(extent['btmRightPoint']['lon']), float(extent['topLeftPoint']['lat']))
         dest_crs = QgsProject.instance().crs()
         results_crs = QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.PostgisCrsId)
         transform = QgsCoordinateTransform(results_crs, dest_crs, QgsProject.instance())
         r = transform.transformBoundingBox(rect)
         self.iface.mapCanvas().setExtent(r, False)
-        # sometimes Nominatim has result with very tiny boundingboxes, let's set a minimum
+        # sometimes TomTom has result with very tiny boundingboxes, let's set a minimum
         if self.iface.mapCanvas().scale() < 500:
             self.iface.mapCanvas().zoomScale(500)
         self.iface.mapCanvas().refresh()
 
     def info(self, msg=""):
-        QgsMessageLog.logMessage('{} {}'.format(self.__class__.__name__, msg), 'NominatimLocatorFilter', Qgis.Info)
+        QgsMessageLog.logMessage('{} {}'.format(self.__class__.__name__, msg), 'TomTomLocatorFilter', Qgis.Info)

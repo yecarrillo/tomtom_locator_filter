@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/plugins/qgislocator" >
+    <qresource prefix="/plugins/tomtom_locator_filter" >
         <file>icons/icon.svg</file>
     </qresource>
 </RCC>
