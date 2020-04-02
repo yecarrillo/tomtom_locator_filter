@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from qgis.core import Qgis, QgsMessageLog, QgsLocatorFilter, QgsLocatorResult, QgsRectangle, \
-    QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
+    QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsExpressionContextUtils
 
 from . networkaccessmanager import NetworkAccessManager, RequestsException
 
@@ -66,23 +66,37 @@ class TomTomLocatorFilter(QgsLocatorFilter):
         return TomTomLocatorFilter(self.iface)
 
     def displayName(self):
-        return 'TomTom Geocoder (end with space to search)'
+        return 'TomTom Geocoder'
 
     def prefix(self):
         return 'tomtom'
 
     def fetchResults(self, search, context, feedback):
 
-        if len(search) < 2:
+        self.info('search {}'.format(search))
+
+        if len(search) < 3:
+            return
+
+        if search in 'tomtom ':
+            return
+
+        project = QgsProject.instance()
+        try:
+            key = QgsExpressionContextUtils.projectScope(project).variable('tomtom_api_key').strip()
+        except:
+            #QgsExpressionContextUtils.setProjectVariable(project, 'tomtom_api_key', '')
+            self.info('Add tomtom_api_key variable to your project')
+            key = ''
             return
 
         # End with a space to trigger a search:
-        if search[-1] != ' ':
-            return
+        #if search[-1] != ' ':
+        #    return
 
-        url = '{}{}'.format(self.SEARCH_URL, search)
+        url = '{}{}'.format(self.SEARCH_URL, search.strip())
         url = url + '.json?'
-        url = url + '&key='
+        url = url + '&key='+key
         url = url + '&idxSet=POI,Geo,Addr,PAD,Str,Xstr'
         self.info('Search url {}'.format(url))
         nam = NetworkAccessManager()
