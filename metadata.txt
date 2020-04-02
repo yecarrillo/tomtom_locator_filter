@@ -6,7 +6,7 @@
 name=TomTom Locator Filter
 qgisMinimumVersion=3.0
 description=This is a plugin which adds a TomTom Locator Filter (Geocoder) to QGIS
-version=0.1
+version=0.2
 author=Eduin Carrillo
 email=yecarrillo@gmail.com
 
